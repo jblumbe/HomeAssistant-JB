@@ -1,2 +1,2 @@
-# HomrAssistant-JB
+# HomeAssistant-JB
 Code for Home Assistant 
