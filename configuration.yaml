@@ -1,6 +1,8 @@
+# Last updated on D2020-07-21 T15:40
+#====================================
 homeassistant:
   # Name of the location where Home Assistant is running
-  name: JB_Home
+  name: JB_Home-G6-Server
   # Location required to calculate the time the sun rises and sets
   latitude: !secret jb_home_latitude 
   longitude: !secret jb_home_longitude 
@@ -12,9 +14,34 @@ homeassistant:
   time_zone: Asia/Jerusalem
   # Customization file
   customize: !include customize.yaml
-#
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+# Uncomment this if you are using SSL/TLS, running in Docker container, etc.
+# http:
+#   base_url: example.duckdns.org:8123
 #
 system_health:   # Added on 2019-06-16 -  ver. 0.94.2
+#
+#
+logbook:  # Added on 2020-07-10 
+#
+#
+history:  # Added on 2020-07-10 
+#
+#
+# ------------------------------------
+# API Integrations - added on 2020-07-19
+# (added for Alexa integration)
+# ------------------------------------
+api:
+# ------------------------------------
+# Alexa integration using haaska - added on 2020-07-19
+# ------------------------------------
+alexa:
+  smart_home:
+# ------------------------------------
+#
+discovery:
 #
 #
 zone:
@@ -24,7 +51,13 @@ zone:
     radius: 200
     icon: mdi:home
 
-####
+###
+#----------------------------------------------
+# Text to speech
+# ------------------------------------
+tts:
+  - platform: google_translate
+#
 # ------------------------------------
 # Included files
 # Moved this here 
@@ -32,143 +65,309 @@ zone:
 group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
-# ------------------------------------
-# 
-# Show links to resources in log and frontend
-#introduction:
-# The above "introduction:" statement was commented out for not showing on system startup...
-
-# Enables the frontend
-frontend:
-
-# Enables configuration UI
-config:
-
-# Uncomment this if you are using SSL/TLS, running in Docker container, etc.
-http:
-#   base_url: jblumbe-ha.duckdns.org:8123
-  api_password: !secret http_password
-  ip_ban_enabled: True
-  login_attempts_threshold: 10
-# ****************************
 #
-# Checks for available updates
-# Note: This component will send some information about your system to
-# the developers to assist with development of Home Assistant.
-# For more information, please see:
-# https://home-assistant.io/blog/2016/10/25/explaining-the-updater/
-updater:
-  # Optional, allows Home Assistant developers to focus on popular components.
-  # include_used_components: true
-
-# Discover some devices automatically
-discovery:
-
-# Allows you to issue voice commands from the frontend in enabled browsers
-conversation:
-
-# Enables support for tracking state changes over time
-history:
-
-# View all events in a logbook
-logbook:
-
-# Enables a map showing the location of tracked devices
-map:
-
-# Track the sun
-sun:
-
-# Sensors
-sensor:
-  # Weather prediction
-  - platform: yr
-
-# Text to speech
-tts:
-  - platform: google_translate
-    service_name: google_say
-
-# Cloud
-cloud:
-
-# FFMPEG 
-ffmpeg:
-  ffmpeg_bin: /usr/bin/ffmpeg
-
-#HA Configurator setup
-#---------------------------Dec. 2018
-panel_iframe:
-  configurator:
-    title: Configurator
-    icon: mdi:wrench
-    url: http://jblumbe-ha.duckdns.org:3218
-# 2018-12-08 was url: http://0.0.0.0:3218 
-# ------------------------------------------------------------
-# only worked internally, then forwarded port 3218 in the main Router and in MI-3 
- #Need to strengthen access to the configurator from outside
-
-#
-# ------------------------------------
-# Google Home Bluetooth Tracker
-# ---- Added on 9-Feb-2019 -----------
-# ------------------------------------ 
-###device_tracker:
-###  - platform: googlehome
-###    host: 192.168.111.103 
-###    threshold: -75
-###    interval_seconds: 20
-###    consider_home: 180
-###    new_device_defaults:
-###      track_new_devices: false
-###      hide_if_away: true
-# ------------------------------------ 
-
-# ----------------------- 25-Dec-2018 -----------
-#
-# mosquitto definitions- MQTT setup
+#----------------------------------------------
+# MQTT definitions
 # ------------------------------------
 mqtt:
-  broker: 192.168.112.154
-  username: yossi
+  broker: !secret mqtt_broker
+  username: !secret mqtt_user
   password: !secret mqtt_password
-#------------------------
+  discovery: true
+  birth_message:
+    topic: 'hass/status'
+    payload: 'online'
+  will_message:
+    topic: 'hass/status'
+    payload: 'offline'
 #
 # ------------------------------------
 # IFTTT Integration 
 # ------------------------------------
 ifttt:
-  key: !secret ifttt-key     # See secrets.yaml file for the key
+  key: 
+    key1: !secret ifttt-key1  # See secrets.yaml file for the key
+    key2: !secret ifttt-key2  # See secrets.yaml file for the key
+    key3: !secret ifttt-key3  # See secrets.yaml file for the key
 #
+# ------------------------------------
+# DD-WRT router integration for tracking users
+# ------------------------------------
+device_tracker:
+  - platform: ddwrt
+    host: !secret ddwrt_ip
+    username: !secret ddwrt_user
+    password: !secret ddwrt_pwd
+    wireless_only: false
+    interval_seconds: 10
+    consider_home: 180
+    new_device_defaults:
+      track_new_devices: true
+#
+###
+#----------------------------------------------
+# SmartIR integration   Added on 2020-07-21 
+# ------------------------------------
+smartir:
+  check_updates: false
+#
+# ------------------------------------
+# Xiaomi Gateway / Hub Integration [Actually, Mijia Hub 01 - Integration was removed from configuration.yaml and is done via "Integrations" setup 
+#                                                            removed support in HA version 0.112 (July 2020)
+# ------------------------------------
+####xiaomi_aqara:
+####  interface: any    # '192.168.112.1'   # or the server IP (like 192.168.111.1) (string)(Optional): Which network interface to use.
+####  discovery_retry: 5         # (integer)(Optional): Number of times that Home Assistant should try to reconnect to the gateway.
+####  gateways:
+####    - mac: !secret xiaomi_gw_mac         # 12 characters MAC can be obtained from the gateway. Needs to be formatted without “:”. Optional if only using one gateway.
+####      key: !secret xiaomi_gw_key      # Key is obtained from the Mi Home application
+####      disable: false            # Boolean / Optional: This is only useful if you don’t want to integrate a specific gateway.
+####      host: !secret xiaomi_gw_host     # String / Optional: The host/IP address of the gateway. If this parameter is used the multicast discovery of the gateway is skipped.
+####      # the default port used by the hub is 9898 
+#####    - mac: xxxxxxxxxxxx         # Another entry
+#####      key: xxxxxxxxxxxxxxxx
+#
+#
+input_select:
+  xiaomi_hub_alarm_tune:
+    name: Tune to play
+    options:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 10
+      - 11
+      - 12
+      - 13
+      - 20
+      - 21
+      - 22
+      - 23
+      - 24
+      - 25
+      - 26
+      - 27
+      - 28
+      - 29
+    initial: 27
+    icon: mdi:music
+#
+  xiaomi_hub_alarm_volume:
+    name: Volume to play
+    options:
+      - 0
+      - 5
+      - 10
+      - 20
+      - 30
+      - 40
+      - 50
+      - 60
+      - 70
+      - 80
+      - 90
+      - 100 
+    initial: 30
+    icon: mdi:volume-high
+#  ----------------------------------
+#  Service xiaomi_aqara.play_ringtone
+#  ----------------------------------
+#=> Alarms
+# -> 0 - Police car 1
+# -> 1 - Police car 2
+# -> 2 - Accident
+# -> 3 - Countdown
+# -> 4 - Ghost
+# -> 5 - Sniper rifle
+# -> 6 - Battle
+# -> 7 - Air raid
+# -> 8 - Bark
+#=> Doorbells
+# -> 10 - Doorbell
+# -> 11 - Knock at a door
+# -> 12 - Amuse
+# -> 13 - Alarm clock
+#=> Alarm clock
+# -> 20 - MiMix
+# -> 21 - Enthusiastic
+# -> 22 - GuitarClassic
+# -> 23 - IceWorldPiano
+# -> 24 - LeisureTime
+# -> 25 - ChildHood
+# -> 26 - MorningStreamLiet
+# -> 27 - MusicBox
+# -> 28 - Orange
+# -> 29 - Thinker
+#
+# ------------------------------------
+# Google Home Assistant Integration     Last updated on 22-JUN-2020
+# ------------------------------------
+google_assistant:
+  project_id: !secret google_assistant_project_id
+  service_account: !include "JB-Home-Assistant-01-1caa125d28e7.json"
+  secure_devices_pin: !secret google_assistant_secure_devices_pin
+  report_state: true
+  expose_by_default: true
+  exposed_domains:
+    - input_boolean
+#	- alarm_control_panel
+    - scene
+    - script
+    - fan
+    - lock
+    - cover
+    - media_player
+    - climate
+    - sensor
+    - switch
+    - light
+    - binary_sensor
+  entity_config:
+    switch.water_pump:
+      name: "water pump"
+      expose: true
+#      room: Workroom
+      aliases:
+        - roof_pump
+#        - roof_water_pump
+    light.Eurolux_01:
+      name: "color bulb"
+      expose: true
+      room: Workroom
+      aliases:
+        - eurolamp
+        - color_lamp
+    cover.bf76d01ac261399e11rsfj:
+      name: "Balcony TV shade"
+      expose: true
+      aliases:
+        - "TV shade"
+        - "TV curtain"
+        - "TV cover"
+#
+#
+# # CLIMATE OPERATION MODES
+# # There is not an exact 1-1 match between Home Assistant and Google Assistant for the available operation modes. 
+# # Here are the modes that are currently available:
+# # 
+# # - off
+# # - heat
+# # - cool
+# # - heatcool (auto)
+# # - fan-only
+# # - dry
+# # - eco
+# # 
+# 
+# ====================================
+# Sonoff - LAN integration (without tasmota)
+sonoff:
+  username: !secret sonoff_app_user
+  password: !secret sonoff_app_pwd 
+# ------------------------------------
+#
+# ====================================
 # ------------------------------------
 # Switches
 # ------------------------------------
-switch:
-# First switch
-# IP:192.168.112.172
+switch sw_t1_01_s1:
+# First switch - Sonoff T1 Euro - 2 gang - switch#1
+# IP:192.168.111.118
   - platform: mqtt
-    name: "Sonoff Simple switch No1"
-    command_topic: "sonoff-g01-s01/cmnd/POWER"
-    state_topic: "sonoff-g01-s01/stat/POWER"
-    qos: 1
+    name: "Sonoff 2-Gang-wall light switch No1-sw1"
+    # entity: switch.sonoff_2_gang_wall_light_switch_no1_sw1
+    command_topic: "sonoff-T1-01/cmnd/POWER1"
+    state_topic: "sonoff-T1-01/stat/POWER1"
+    qos: 0
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: false
+#
+# ------------------------------------
+switch  sw_t1_01_s2:
+# Second switch - Sonoff T1 Euro - 2 gang - switch#2
+# IP:192.168.111.118
+  - platform: mqtt
+    name: "Sonoff 2-Gang-wall light switch No1-sw2"
+    # entity: switch.sonoff_2_gang_wall_light_switch_no1_sw2
+    command_topic: "sonoff-T1-01/cmnd/POWER2"
+    state_topic: "sonoff-T1-01/stat/POWER2"
+    qos: 0
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: false
+#
+# ------------------------------------
+switch  sw_g4_01_s1:
+# Third switch
+# IP:192.168.111.130   #--- 4ch-RF Sonoff 4ch Pro compatible by New Smart - model G4 - relay 1
+#                      # IP updated on 04-04-2020
+  - platform: mqtt
+    name: "Sw4ChRF-01_OUT1" # "Sonoff 4ch-RF switch No1"
+    # entity: switch.sw4chrf-01_relay1  #Sw4ChRF-01
+    command_topic: "cmnd/Sw4ChRF-01/POWER1"   # "sw4chrf-01/cmnd/POWER1"
+    state_topic: "stat/Sw4ChRF-01/POWER1"
+    qos: 0
     payload_on: "ON"
     payload_off: "OFF"
     retain: false
 # ------------------------------------
-# Second switch
-# IP:192.168.112.119
+#
+switch  sw_g4_01_s2:
+# Fourth switch
+# IP:192.168.111.130   #--- 4ch-RF Sonoff 4ch Pro compatible by New Smart - model G4 - relay 2
+#                      # IP updated on 04-04-2020
   - platform: mqtt
-    name: "SonOff POW switch No1"
-    command_topic: "sonoff-g01-POW01/cmnd/POWER"
-    state_topic: "sonoff-g01-POW01/stat/POWER"
-    qos: 1
+    name: "Sw4ChRF-01_OUT2" # "Sonoff 4ch-RF switch No2"
+    # entity: switch.sw4chrf-01_relay2 (B)  
+    command_topic: "cmnd/Sw4ChRF-01/POWER2"   # 
+    state_topic: "stat/Sw4ChRF-01/POWER2"
+    qos: 0
     payload_on: "ON"
     payload_off: "OFF"
     retain: false
-#    payload_toggle: "TOGGLE"
+#
 # ------------------------------------
-# Third switch - Sonoff S20 
-# IP:192.168.112.171
+#
+switch  sw_g4_01_s3:
+# Fifth switch
+# IP:192.168.111.130   #--- 4ch-RF Sonoff 4ch Pro compatible by New Smart - model G4 - relay 3
+#                      # IP updated on 04-04-2020
+  - platform: mqtt
+    name: "Sw4ChRF-01_OUT3" # "Sonoff 4ch-RF switch No3"
+    # entity: switch.sw4chrf-01_relay3
+    command_topic: "cmnd/Sw4ChRF-01/POWER3"   #
+    state_topic: "stat/Sw4ChRF-01/POWER3"
+    qos: 0
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: false
+# ------------------------------------
+#
+switch  sw_g4_01_s4:
+# Sixth switch
+# IP:192.168.111.130   #--- 4ch-RF Sonoff 4ch Pro compatible by New Smart - model G4 - relay 4
+#                      # IP updated on 04-04-2020
+  - platform: mqtt
+    name: "Sw4ChRF-01_OUT4" # "Sonoff 4ch-RF switch No4"
+    # entity: switch.sw4chrf-01_relay4
+    command_topic: "cmnd/Sw4ChRF-01/POWER4"   #  
+    state_topic: "stat/Sw4ChRF-01/POWER4"
+    qos: 0
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: false
+# ------------------------------------
+#
+switch sw_s20_01:
+## Seventh switch - Sonoff S20 ===> MAC Address B4:E6:2D:25:18:5B
+## IP:192.168.111.145
   - platform: mqtt
     name: "Sonoff Wall socket switch No1"
     command_topic: "sonoff-S20-01/cmnd/POWER"
@@ -177,227 +376,816 @@ switch:
     payload_on: "ON"
     payload_off: "OFF"
     retain: false
-#    payload_toggle: "TOGGLE"
+#
 # ------------------------------------
-# Fourth switch - Sonoff T1 Euro - 2 gang - switch#1
-# IP:192.168.112.152
+switch sonoff_basic_05:
+# General Purpose - operated by Sonoff basic   
+# IP:192.168.111.133   MAC: 5C:CF:7F:57:CF:A4 # IP updated on 04-04-2020
+# ------------------------------------
   - platform: mqtt
-    name: "Sonoff 2-Gang-wall light switch No1-sw1"
-    # entity: switch.sonoff_2_gang_wall_light_switch_no1_sw1
-    command_topic: "sonoff-T1-01/cmnd/POWER1"
-    state_topic: "sonoff-T1-01/stat/POWER1"
-    qos: 1
+    name: "General switch 05" # Connected to a lamp cord
+    # entity: switch.general_switch_05
+    command_topic: "cmnd/sonoff_57CFA4/POWER"   #  
+    state_topic: "stat/sonoff_57CFA4/POWER"
     payload_on: "ON"
     payload_off: "OFF"
     retain: false
-#    payload_toggle: "TOGGLE"
+    icon: 'mdi:toggle-switch-outline'
+#
+#
+binary_sensor sonoff_basic_05_sensor:
+  #This sensor is based on Sonoff GPIO 14 (defined as "Switch2". 
+  #             Was defined via the sonoff console with:
+  #             (a) "SwitchTopic sonoff05-sensor"
+  #             [??? Not exactly relevant here] (b) "Switchmode2 2" ==>> we want it INVERTED: When the sensor is dry, it is open circuit, when it is wet - it closes the contact
+  #             (c) "SwitchRetain on"
+  #                                         
+  # IP:192.168.111.133   MAC: 5C:CF:7F:57:CF:A4 
+  - platform: "mqtt"
+    name: "Sonoff05-sensor"  #binary_sensor.sonoff05_sensor
+    state_topic: "cmnd/sonoff05-sensor/POWER2"
+    payload_on: "ON"     # On is  "OPEN"
+    payload_off: "OFF"   # Off is "CLOSED"
+    device_class: "door"
+#
+#
+#
 # ------------------------------------
-# Fifth switch - Sonoff T1 Euro - 2 gang - switch#2
-# IP:192.168.112.152
+# NEO CoolCam socket switch 01
+# IP:192.168.111.149   MAC: 2C:F4:32:04:98:A6
+# ------------------------------------
+switch sw_neo_cc_01:
   - platform: mqtt
-    name: "Sonoff 2-Gang-wall light switch No1-sw2"   
-    # entity: switch.sonoff_2_gang_wall_light_switch_no1_sw2
-    command_topic: "sonoff-T1-01/cmnd/POWER2"
-    state_topic: "sonoff-T1-01/stat/POWER2"
-    qos: 1
+    name: "CC_socket_01" # "Neo CoolCam socket 01"
+    # entity: switch.cc_socket_01
+    command_topic: "CC_socket_01/cmnd/POWER"   #  
+    state_topic: "CC_socket_01/stat/POWER"
+    qos: 0
     payload_on: "ON"
     payload_off: "OFF"
     retain: false
-#    payload_toggle: "TOGGLE"
-# ------------------------------------
-# Sonoff RF Bridge 01 switches, emulating Remote 01 (Black)
-# These are used for sending out RF commands from the RF Bridge
-# IP:192.168.112.170
-# ------------------------------------
-  - platform: mqtt
-    name: "RF_Bridge01 Remt01_BtnA"
-    command_topic: "RF_Bridge_01/cmnd/RfCode"
-    state_topic: "RF_Bridge_01/tele/RESULT"
-    qos: 1
-    payload_on: "#39CE94"
-#    payload_off: "#39CE94"
-#    payload_toggle: "#39CE94"
-    retain: false
+    icon: 'mdi:power-socket-eu'
 #
-# ------------------------------------
-  - platform: mqtt
-    name: "RF_Bridge01 Remt01_BtnB"
-    command_topic: "RF_Bridge_01/cmnd/RfCode"
-    state_topic: "RF_Bridge_01/tele/RESULT"
-    qos: 1
-    payload_on: "#39CE98"
-#    payload_off: "#39CE98"
-#    payload_toggle: "#39CE98"
-    retain: false
-#    
-# ------------------------------------
-  - platform: mqtt
-    name: "RF_Bridge01 Remt01_BtnBD"
-    command_topic: "RF_Bridge_01/cmnd/RfCode"
-    state_topic: "RF_Bridge_01/tele/RESULT"
-    qos: 1
-    payload_on: "#39CE9A"
-#    payload_off: "#39CE9A"
-#    payload_toggle: "#39CE9A"
-    retain: false
-#    
-# ------------------------------------
-  - platform: mqtt
-    name: "RF_Bridge01 Remt01_BtnC"
-    command_topic: "RF_Bridge_01/cmnd/RfCode"
-    state_topic: "RF_Bridge_01/tele/RESULT"
-    qos: 1
-    payload_on: "#39CE91"
-#    payload_off: "#39CE91"
-#    payload_toggle: "#39CE91"
-    retain: false
 #
-# ------------------------------------
-  - platform: mqtt
-    name: "RF_Bridge01 Remt01_BtnD"
-    command_topic: "RF_Bridge_01/cmnd/RfCode"
-    state_topic: "RF_Bridge_01/stat/RESULT"
-    qos: 1
-    payload_on: "#39CE92"
-#    payload_off: "#39CE92"
-#    payload_toggle: "#39CE92"
-    retain: false
-#    
+# ===============================================
+# Broadlink IR remote switches
+# ===============================================
+#
 # ------------------------------------
 # Broadlink mini remote RM-mini3 IR No. 1
-# IP:192.168.112.125
+# IP:192.168.111.61 # IP updated on 04-04-2020
 # ------------------------------------
+switch  sw_rm_mini_01:
   - platform: broadlink
-    host: 192.168.112.125
-    mac: '34:ea:34:42:a4:dc'
-    type: rm_mini
-    timeout: 15
+    host: 192.168.111.62   # 
+    mac: '34:EA:34:42:BA:3F'
+# THIS PART removed on 24-10-2020 due to configuration check for version 0.116.4
+#    type: rm_mini    # Switch type. Choose one from: rm, rm2, rm_mini, rm_pro_phicomm, rm2_home_plus,    rm2_home_plus_gdt, rm2_pro_plus, rm2_pro_plus2, rm2_pro_plus_bl, rm_mini_shate, sp1, sp2, honeywell_sp2, sp3, spmini2, spminiplus or mp1. SC1 devices can be registered as sp2.
+#    timeout: 15
+#--------------------------------------------------------------------------------
     switches: !include ir_cmnd_broadlink.yaml
 # moved all IR commands (switches) to a separate file -> ir_cmnd_broadlink.yaml
 #
+switch sw_rm_proplus_01:
+  - platform: broadlink
+    host: 192.168.111.60   # New remote # IP updated on 04-04-2020
+    mac: 'c8:f7:42:da:24:a2'
+# THIS PART removed on 24-10-2020 due to configuration check for version 0.116.4
+#    type: rm2_pro_plus2
+#    timeout: 15
+#--------------------------------------------------------------------------------
+    switches: !include ir_cmnd_broadlink_RM_ProP3_all.yaml
+# 
+# moved all IR commands (switches) to a separate file -> ir_cmnd_broadlink_RM_ProP3_all.yaml
+#
+#
+# ===============================================
+# BlitzWolf BW-RC1-01 IR remote control switches
+# ===============================================
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# using the packages option to bring the BW-RC1 switches
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  - packages: 
+#    - pack_01: !include ir_cmnd_bw-rc1_01.yaml
 # ------------------------------------
-# Controlling media devices via LAN 
+# BlitzWolf BW-RC1-01 IR remote control
 # ------------------------------------
-media_player:
-# Harman Kardon Receiver AVR 151S
-# IP:192.168.111.114
-  - platform: harman_kardon_avr
-    host: 192.168.111.114
-    name: Harman Kardon AVR 151S
-# LG WebOS TV
-# IP:192.168.111.112
-  - platform: webostv
-    host: 192.168.111.112
-    name: LG OLED65 TV - Salon
-    filename: webostv.conf
-    timeout: 5
-    turn_on_action:
-      service: wake_on_lan.send_magic_packet  # doesn't seem to work
-      data:
-        mac: "38-8C-50-D5-F5-12"      # the TV's MAC address
-#      service: persistent_notification.create  # another way to turn the TV on remotely - doesn't work as well
-#      data:
-#        message: "Turn on action"
-    customize:
-      sources:
-        - ערוצי עידן +
-        - youtube
-        - makotv
-        - netflix
+# 
+#    hk_receiver_avr151s_power:
+switch hk_avr151s_power:
+  - platform: mqtt
+    command_topic: "cmnd/BW-RC1-01/IrSend"
+    state_topic: "stat/BW-RC1-01/RESULT"
+    icon: mdi:power
+    name: "HK AVR151S PowerON"
+    payload_on: '{"Protocol":"NEC","Bits":32,"Data":"0x010E03FC","DataLSB":"0x8070C03F","Repeat":0}'
+    payload_off: '{"Protocol":"NEC","Bits":32,"Data":"0x010EF906","DataLSB":"0x010EF906","Repeat":0}'
+# 
+#!##  hk_receiver_avr151s_poweroff:
+#!#  - platform: mqtt
+#!#    command_topic: cmnd/BW-RC1-01/IrSend
+#!#    state_topic: stat/BW-RC1-01/RESULT
+#!#    icon: mdi:power-off
+#!#    name: "HK AVR151S PowerOFF"
+#!#    payload_on: '{"Protocol":"NEC","Bits":32,"Data":"0x010EF906","DataLSB":"0x010EF906","Repeat":0}'
+#!## 
+#   hk_receiver_avr151s_mute:
+switch hk_avr151s_mute:
+  - platform: mqtt
+    command_topic: cmnd/BW-RC1-01/IrSend
+    state_topic: stat/BW-RC1-01/RESULT
+    icon: mdi:volume-mute
+    name: "HK AVR151S Mute"
+    payload_on: '{"Protocol":"NEC","Bits":32,"Data":"0x010E837C","DataLSB":"0x8070C13E","Repeat":0}'
+    payload_off: '{"Protocol":"NEC","Bits":32,"Data":"0x010E837C","DataLSB":"0x8070C13E","Repeat":0}'
 #
 # ------------------------------------
-# CAMERA 
+# Lights
 # ------------------------------------
+#
+light Eurolux_01:
+  - platform: mqtt
+    name: "Eurolux bulb 01"
+    command_topic: "cmnd/Eurolux_01/POWER"
+    state_topic: "tele/Eurolux_01/STATE"
+    state_value_template: "{{value_json.POWER}}"
+    availability_topic: "tele/Eurolux_01/LWT"
+    brightness_command_topic: "cmnd/Eurolux_01/Dimmer"
+    brightness_state_topic: "tele/Eurolux_01/STATE"
+    brightness_scale: 100
+    on_command_type: "last"
+    brightness_value_template: "{{value_json.Dimmer}}"
+    color_temp_command_topic: "cmnd/Eurolux_01/CT"
+    color_temp_state_topic: "tele/Eurolux_01/STATE"
+    color_temp_value_template: "{{value_json.CT}}"
+    rgb_command_topic: "cmnd/Eurolux_01/Color2"
+    rgb_state_topic: "tele/Eurolux_01/STATE"
+    rgb_value_template: "{{value_json.Color.split(',')[0:3]|join(',')}}"
+    effect_command_topic: "cmnd/Eurolux_01/Scheme"
+    effect_state_topic: "tele/Eurolux_01/STATE"
+    effect_value_template: "{{value_json.Scheme}}"
+    effect_list:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+    payload_on: "ON"
+    payload_off: "OFF"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+    qos: 1
+    retain: false
+#
+# ------------------------------------
+#======= zigbee2mqtt Aqara light bulb01 ZNLDP12LM 0x00158d0004112e5e ===========
+# ------------------------------------
+#
+light aqara_bulb01:
+  - platform: "mqtt"
+    name: "Aqara bulb 01"
+    state_topic: "zigbee2mqtt/0x00158d0004112e5e"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    brightness: true
+    color_temp: true
+    schema: "json"
+    command_topic: "zigbee2mqtt/0x00158d0004112e5e/set"
+#
+sensor aqara_bulb01:
+  - platform: "mqtt"
+    name: "Aqara bulb 01 link quality"
+    state_topic: "zigbee2mqtt/0x00158d0004112e5e"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:satellite-uplink"
+    unit_of_measurement: "lqi"
+    value_template: "{{ value_json.linkquality }}"
+#
+# ------------------------------------
+# Remotes
+# ------------------------------------
+remote: !include remotes.yaml
+#
+# #
+# # ------------------------------------
+# # Controlling media devices via LAN 
+# # ------------------------------------
+media_player:
+# Harman Kardon Receiver AVR 151S
+# IP:192.168.111.81 (was 192.168.111.114)
+  - platform: harman_kardon_avr
+    host: 192.168.111.81
+    name: Harman Kardon AVR 151S
+#---------------------------------
+webostv:
+  host: 192.168.111.80 # IP updated on 04-04-2020
+  name: LG OLED65 TV - Salon
+  turn_on_action:
+    service: wake_on_lan.send_magic_packet  # doesn't seem to work
+    data:
+      mac: "38-8C-50-D5-F5-12"      # the TV's MAC address
+  customize:
+    sources:
+      - ערוצי עידן +
+      - youtube
+      - makotv
+      - netflix
+      - Partner tv
+#
+#>>>## LG WebOS TV
+#>>>## IP:192.168.111.112
+#>>>#  - platform: webostv
+#>>>#    host: 192.168.111.112
+#>>>#    name: LG OLED65 TV - Salon
+#>>>#    filename: webostv.conf
+#>>>#    timeout: 5
+#>>>#    turn_on_action:
+#>>>#      service: wake_on_lan.send_magic_packet  # doesn't seem to work
+#>>>#      data:
+#>>>#        mac: "38-8C-50-D5-F5-12"      # the TV's MAC address
+#>>>##      service: persistent_notification.create  # another way to turn the TV on remotely - doesn't work as well
+#>>>##      data:
+#>>>##        message: "Turn on action"
+#>>>#    customize:
+#>>>#      sources:
+#>>>#        - ערוצי עידן +
+#>>>#        - youtube
+#>>>#        - makotv
+#>>>#        - netflix
+#>>>#        - SmartShare
+#>>>##
+#
+#
+# ------------------------------------
+# Sensors
+# ------------------------------------
+#sensor:
+# ------------------------------------
+# Aqara cube  0x00158d00029acc5a  MFKZQ01LM
+# ------------------------------------# 
+sensor aqara_cube01_action:
+  - platform: "mqtt"
+    name: Cube state
+    state_topic: "zigbee2mqtt/0x00158d00029acc5a"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:gesture-double-tap"
+    value_template: "{{ value_json.action }}" 
+    json_attributes_topic: "zigbee2mqtt/0x00158d00029acc5a" # WAS as the list below
+#    json_attributes: #  and the list below... (now commented out)
+#      - "action"
+#      - "battery"
+#      - "voltage"
+#      - "angle"
+#      - "side"
+#      - "from_side"
+#      - "to_side"
+#      - "brightness"
+#      - "angle_x_absolute"
+#      - "angle_y_absolute"
+#      - "angle_z"
+#      - "angle_y"
+#      - "angle_x"
+#      - "unknown_data"
+    force_update: true
+#
+# 
+sensor aqara_cube01_battery:
+  - platform: "mqtt"
+    name: Cube battery
+    state_topic: "zigbee2mqtt/0x00158d00029acc5a"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:battery-90"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}" 
+#
+sensor aqara_cube01_link_quality:
+  - platform: "mqtt"
+    name: Cube linkquality
+    state_topic: "zigbee2mqtt/0x00158d00029acc5a"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:satellite-uplink"
+    unit_of_measurement: "lqi"
+    value_template: "{{ value_json.linkquality }}"
+#
+sensor zigbee_bridge_state:
+  - platform: "mqtt"
+    name: Zigbee Bridge state  # === zigbee_bridge_state entity ===
+    state_topic: "zigbee2mqtt/bridge/state"
+    icon: mdi:router-wireless
+#
+# ------------------------------------
+# Mijia switch 01  0x00158d00035a58dd  WXKG01LM
+# ------------------------------------
+#    
+sensor mijia_switch01_state:
+  - platform: "mqtt"
+    name: mijia_switch01_state
+    state_topic: "zigbee2mqtt/0x00158d00035a58dd"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:toggle-switch"
+    value_template: "{{ value_json.click }}" 
+    json_attributes_topic: "zigbee2mqtt/0x00158d00035a58dd" # WAS as the list below
+#    json_attributes: #  and the list below... (now commented out)
+#      - "click" can have several values: single, double, triple, quadruple, many , long, long_release
+#      - "voltage"
+#      - "linkquality"
+#      - "battery"
+#      - "duration"
+#      - "unknown_data"
+    force_update: true
+# 
+sensor mijia_switch01_battery:
+  - platform: "mqtt"
+    name: mijia_switch01_battery
+    state_topic: "zigbee2mqtt/0x00158d00035a58dd"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:battery-90"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}" 
+#
+sensor mijia_switch01_linkquality:
+  - platform: "mqtt"
+    name: mijia_switch01_linkquality
+    state_topic: "zigbee2mqtt/0x00158d00035a58dd"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:satellite-uplink"
+    unit_of_measurement: "lqi"
+    value_template: "{{ value_json.linkquality }}"
+#
+# ------------------------------------
+# Mijia switch 02 with gyro  0x00158d0004467b54  WXKG12LM
+# ------------------------------------
+#    
+sensor mijia_switch02_state:
+  - platform: "mqtt"
+    name: mijia_switch02_state  # actually it is probably an Aqara switch
+    state_topic: "zigbee2mqtt/0x00158d0004467b54"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:toggle-switch"
+    value_template: "{{ value_json.click }}" 
+    json_attributes_topic: "zigbee2mqtt/0x00158d0004467b54" # WAS as the list below
+#    json_attributes: #  and the list below... (now commented out)
+#      - "click" can have several values: single, double, 
+#      - "action" can have a value of shake, hold, release
+#      - "voltage"
+#      - "linkquality"
+#      - "battery"
+#      - "duration" - need to see how this is aquired
+#      - "unknown_data"
+    force_update: true
+# 
+sensor mijia_switch02_battery:
+  - platform: "mqtt"
+    name: mijia_switch02_battery
+    state_topic: "zigbee2mqtt/0x00158d0004467b54"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:battery-90"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}" 
+#
+sensor mijia_switch02_linkquality:
+  - platform: "mqtt"
+    name: mijia_switch02_linkquality
+    state_topic: "zigbee2mqtt/0x00158d0004467b54"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:satellite-uplink"
+    unit_of_measurement: "lqi"
+    value_template: "{{ value_json.linkquality }}"
+#
+# ------------------------------------
+# Mijia human body sensor 01  0x00158d0003589754  RTCGQ01LM
+# ------------------------------------
+#
+sensor mijia_human_sensor01_battery:
+  - platform: "mqtt"
+    name: "Mijia human sensor01 battery" #sensor.mijia_human_sensor01_battery
+    state_topic: "zigbee2mqtt/0x00158d0003589754"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    icon: "mdi:battery-90"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}"
+#
+sensor mijia_human_sensor01_linkquality:
+  - platform: "mqtt"
+    name: "Mijia human sensor01 linkquality" #sensor.mijia_human_sensor01_linkquality
+    state_topic: "zigbee2mqtt/0x00158d0003589754"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:satellite-uplink"
+    unit_of_measurement: "lqi"
+    value_template: "{{ value_json.linkquality }}"  
+#
+# ------------------------------------
+# Mijia proximity sensor 01  0x00158d0004073ca0  MCCGQ01LM
+# ------------------------------------
+#
+sensor mijia_proximity_sensor01_battery:
+  - platform: "mqtt"
+    name: "Mijia proximity sensor01 battery" #sensor.mijia_proximity_sensor01_battery
+    state_topic: "zigbee2mqtt/0x00158d0004073ca0"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    icon: "mdi:battery-90"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}"
+#
+sensor mijia_proximity_sensor01_linkquality:
+  - platform: "mqtt"
+    name: "Mijia proximity sensor01 linkquality" #sensor.mijia_proximity_sensor01_linkquality
+    state_topic: "zigbee2mqtt/0x00158d0004073ca0"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:satellite-uplink"
+    unit_of_measurement: "lqi"
+    value_template: "{{ value_json.linkquality }}"  
+#
+# ------------------------------------
+# Aqara water leak sensor 01  0x00158d00041f7636  SJCGQ11LM
+# ------------------------------------
+#
+sensor mijia_waterleak_sensor01_battery:
+  - platform: "mqtt"
+    name: "Aqara water leak sensor01 battery" #sensor.aqara_water_leak_sensor01_battery
+    state_topic: "zigbee2mqtt/0x00158d00041f7636"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    icon: "mdi:battery-90"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}"
+#
+sensor mijia_waterleak_sensor01_linkquality:
+  - platform: "mqtt"
+    name: "Aqara water leak sensor01 linkquality" #sensor.aqara_water_leak_sensor01_linkquality
+    state_topic: "zigbee2mqtt/0x00158d00041f7636"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:satellite-uplink"
+    unit_of_measurement: "lqi"
+    value_template: "{{ value_json.linkquality }}"  
+#
+# ------------------------------------
+# Aqara Temperature and Humidity sensor 01  0x00158d0004184ee6  WSDCGQ11LM
+# ------------------------------------
+#
+sensor aqara_temphumidity_sensor01_temperature:
+  - platform: "mqtt"
+    name: "Aqara TempHumidity sensor01 temperature" #sensor.aqara_temphumidity_sensor01_temperature
+    state_topic: "zigbee2mqtt/0x00158d0004184ee6"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "°C"
+    device_class: "temperature"
+    value_template: "{{ value_json.temperature }}"    
+    icon: "mdi:temperature-celsius"
+#
+sensor aqara_temphumidity_sensor01_humidity:
+  - platform: "mqtt"
+    name: "Aqara TempHumidity sensor01 humidity" #sensor.aqara_temphumidity_sensor01_humidity
+    state_topic: "zigbee2mqtt/0x00158d0004184ee6"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    icon: "mdi:water-percent"
+    device_class: "humidity"
+    value_template: "{{ value_json.humidity }}"
+#
+sensor aqara_temphumidity_sensor01_pressure:
+  - platform: "mqtt"
+    name: "Aqara TempHumidity sensor01 pressure" #sensor.aqara_temphumidity_sensor01_pressure
+    state_topic: "zigbee2mqtt/0x00158d0004184ee6"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "hPa"
+    device_class: "pressure"
+    value_template: "{{ value_json.pressure }}"
+    icon: "mdi:arrow-collapse-all"
+#
+sensor aqara_temphumidity_sensor01_battery:
+  - platform: "mqtt"
+    name: "Aqara TempHumidity sensor01 battery" #sensor.aqara_temphumidity_sensor01_battery
+    state_topic: "zigbee2mqtt/0x00158d0004184ee6"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    unit_of_measurement: "%"
+    icon: "mdi:battery-90"
+    device_class: "battery"
+    value_template: "{{ value_json.battery }}"
+#
+sensor aqara_temphumidity_sensor01_linkquality:
+  - platform: "mqtt"
+    name: "Aqara TempHumidity sensor01 linkquality" #sensor.aqara_temphumidity_sensor01_linkquality
+    state_topic: "zigbee2mqtt/0x00158d0004184ee6"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    icon: "mdi:satellite-uplink"
+    unit_of_measurement: "lqi"
+    value_template: "{{ value_json.linkquality }}"  
+#
+# ------------------------------------
+#========= zigbee2mqtt CC2530 repeater 0x00124b000642ba15 =====================
+# ------------------------------------
+#
+sensor zigbee2mqtt_CC2530_repeater_linkquality:
+  - platform: "mqtt"
+    name: "zigbee2mqtt CC2530 repeater_linkquality"  #sensor.zigbee2mqtt_cc2530_repeater
+    state_topic: "zigbee2mqtt/0x00124b000642ba15"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    expire_after: 120
+    icon: "mdi:satellite-uplink"
+    unit_of_measurement: "lqi"
+    value_template: "{{ value_json.linkquality }}" 
+    
+###binary_sensor zigbee2mqtt_CC2530_repeater:
+###  - platform: "mqtt"
+###    name: "zigbee2mqtt_CC2530_router" # binary_sensor.zigbee2mqtt_cc2530_router
+###    payload_on: true
+###    payload_off: false
+###    availability_topic: "zigbee2mqtt/bridge/state"
+###    value_template: "{{ value_json.state }}"
+###    device_class: "connectivity"
+###    state_topic: "zigbee2mqtt/0x00124b000642ba15"
+###    json_attributes_topic: "zigbee2mqtt/0x00124b000642ba15"
+###    unique_id: "0x00124b000642ba15_router_zigbee2mqtt"
+###    device: {
+###        identifiers: ["zigbee2mqtt_0x00124b000642ba15"],
+###        name: "0x00124b000642ba15",
+###        sw_version: "Zigbee2mqtt 1.11.0",
+###        model: "[CC2530 router](http://ptvo.info/cc2530-based-zigbee-coordinator-and-router-112/) (CC2530.ROUTER)",
+###        manufacturer: "Custom devices (DiY)"
+###    }
+###  
+#
+# ------------------------------------
+# Sonoff RF_Bridge_01 192.168.111.144  
+# ------------------------------------
+#
+sensor RF_Bridge_01:
+  - platform: "mqtt"
+    name: "Sonoff RF Bridge 01" #sensor.Sonoff_RF_Bridge_01
+    state_topic: "tele/RF_Bridge_01/RESULT"
+    availability_topic: "tele/RF_Bridge_01/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+#    unit_of_measurement: "#"
+    icon: "mdi:radio-tower"
+    value_template: '{{value_json.RfReceived.Data}}'
+#    json_attributes_topic: "tele/RF_Bridge_01/RESULT"
+#    json_attributes_template: '{{value_json.RfReceived.Data | tojson }}'
+#
+# ------------------------------------
+# BlitzWolf IR Remote BW-RC1-01 192.168.111.148  2C:F4:32:84:2E:57
+# ------------------------------------
+#
+sensor BW-RC1-01:
+  - platform: "mqtt"
+    name: "BW-RC1 01" #sensor.Sonoff_RF_Bridge_01
+    state_topic: "tele/BW-RC1-01/RESULT"
+    availability_topic: "tele/BW-RC1-01/LWT"
+    payload_available: "Online"
+    payload_not_available: "Offline"
+#    unit_of_measurement: "#"
+    icon: "mdi:remote"
+    value_template: '{{value_json.IrReceived.Data}}'
+#
+# ------------------------------------
+# Sonoff ZHA_Bridge_01 192.168.111.106   # Added on 2020-09-22 
+# ------------------------------------
+#
+###zha:
+###  usb_path: socket://192.168.111.106:8888
+###  database_path: /config/zigbee.db
+# ------------------------------------
+# Binary Sensors
+# ------------------------------------
+#binary_sensor:
+#
+#========= Mijia human body Sensor binary sensor 0x00158d0003589754 =====================
+binary_sensor mijia_human_movement_sensor01_occupancy:
+  - platform: "mqtt"
+    name: "Mijia human movement sensor01"  #binary_sensor.mijia_human_movement_sensor01
+    state_topic: "zigbee2mqtt/0x00158d0003589754"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    payload_on: true
+    payload_off: false
+#    icon: "mdi:run"  # no icons for binary sensors ????
+    value_template: "{{ value_json.occupancy }}" 
+    # Need to check how to use "no_occupancy_since" and "occupancy_timeout" messages
+    device_class: "motion" 
+#   
+#======= Mijia proximity Sensor MCCGQ01LM binary sensor 0x00158d0004073ca0 =============
+#
+binary_sensor mijia_proximity_sensor01_contact:
+  - platform: "mqtt"
+    name: "Mijia proximity sensor01"  #binary_sensor.mijia_proximity_sensor01
+    state_topic: "zigbee2mqtt/0x00158d0004073ca0"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    payload_on: false
+    payload_off: true
+    value_template: "{{ value_json.contact }}" 
+    # Need to check how to use "no_occupancy_since" and "occupancy_timeout" messages
+    device_class: "door"
+#
+#
+#======= Aqara water leak Sensor SJCGQ11LM binary sensor 0x00158d00041f7636 =============
+#
+binary_sensor aqara_water_leak_sensor01:
+  - platform: "mqtt"
+    name: "Aqara water leak sensor01"  #binary_sensor.aqara_water_leak_sensor01
+    state_topic: "zigbee2mqtt/0x00158d00041f7636"
+    availability_topic: "zigbee2mqtt/bridge/state"
+    payload_on: true
+    payload_off: false
+    value_template: "{{ value_json.water_leak }}" 
+    device_class: "moisture"
+#
+# ================================================================================
+# ======= Roof water Sensor binary sensor (external to Sonoff "water_pump" ===========
+#
+binary_sensor roof_water_sensor:
+#This sensor is based on Sonoff GPIO 14 (defined as "Switch2". 
+#             Was defined via the sonoff console with:
+#             (a) "SwitchTopic roof_water_sensor"
+#             (b) "Switchmode2 2" ==>> we want it INVERTED: When the sensor is dry, it is open circuit, when it is wet - it closes the contact
+#             (c) "SwitchRetain on"
+#                                         
+# IP:192.168.111.131   MAC: 5C:CF:7F:57:F6:D2
+#
+  - platform: "mqtt"
+    name: "Roof water sensor"  #binary_sensor.roof_water_sensor
+    state_topic: "cmnd/roof_water_sensor/POWER2"
+    payload_on: "ON"     # On is  "Wet"
+    payload_off: "OFF"   # Off is "Dry"
+    device_class: "moisture"
+#
+# ------------------------------------
+switch water_pump:
+# Roof water pump - operated by Sonoff basic with a sensor 
+# IP:192.168.111.131   MAC: 5C:CF:7F:57:F6:D2 # IP updated on 04-04-2020
+# ------------------------------------
+  - platform: "mqtt"
+    name: "Water pump" # Roof water pump     # entity: switch.water_pump
+    command_topic: "cmnd/water_pump/POWER"   #  
+    state_topic: "stat/water_pump/POWER"
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: false
+    icon: 'mdi:water-pump'
+#
+#================================================================
+#======== zigbee2mqtt control panel ================
+#
+input_boolean:
+  zigbee_permit_join:
+    name: Allow Zigbee devices to join
+    initial: off
+    icon: mdi:cellphone-wireless
+
+timer:
+  zigbee_permit_join:
+    name: Time remaining
+    duration: 600
+#
+# ------------------------------------
+# CAMERAs 
+# ------------------------------------
+##===== added on 2019-11-19
+#
+android_ip_webcam:
+  - host: !secret ipwebcam01host #192.168.111.72
+    port: !secret ipwebcam01port #20202
+    name: "GT9100 IP Webcam"
+    username: !secret ipwebcam01user
+    password: !secret ipwebcam01pwd
+    switches:
+      - torch
+      - gps_active
+#      - exposure_lock
+#      - ffc
+#      - focus
+#      - night_vision
+#      - overlay
+#      - whitebalance_lock
+#      - video_recording
+#    sensors:
+#      - audio_connections
+#      - battery_level
+#      - battery_temp
+#      - battery_voltage
+#      - light
+#      - motion
+#      - pressure
+#      - proximity
+#      - sound
+#      - video_connections
+#
+##===== added on 2020-11-10
+#
+  - host: !secret ipwebcam02host #192.168.111.73
+    port: !secret ipwebcam02port #21212
+    name: "GT9100 IP Webcam02"
+    username: !secret ipwebcam02user
+    password: !secret ipwebcam02pwd
+    switches:
+      - torch
+      - gps_active
+#      - exposure_lock
+#      - ffc
+#      - focus
+#      - night_vision
+#      - overlay
+#      - whitebalance_lock
+#      - video_recording
+#    sensors:
+#      - audio_connections
+#      - battery_level
+#      - battery_temp
+#      - battery_voltage
+#      - light
+#      - motion
+#      - pressure
+#      - proximity
+#      - sound
+#      - video_connections
+#
+##===== added on 2020-11-12
+#
+  - host: !secret ipwebcam03host #192.168.111.76
+    port: !secret ipwebcam03port #40804
+    name: "LG Volt IP Webcam03"
+    username: !secret ipwebcam03user
+    password: !secret ipwebcam03pwd
+    switches:
+      - torch
+      - gps_active
+#      - exposure_lock
+#      - ffc
+#      - focus
+#      - night_vision
+#      - overlay
+#      - whitebalance_lock
+#      - video_recording
+#    sensors:
+#      - audio_connections
+#      - battery_level
+#      - battery_temp
+#      - battery_voltage
+#      - light
+#      - motion
+#      - pressure
+#      - proximity
+#      - sound
+#      - video_connections
+#
+#===== added on 2020-02-06
+# FFMPEG 
+ffmpeg:
+  ffmpeg_bin: /usr/bin/ffmpeg
+#
+#
+# --------------------------------------
+#    Added this for PTZ support - on 22/11/2020 per https://community.home-assistant.io/t/digoo-dg-m1x-working-a-sub-30-camera/21397/39
+shell_command:
+  dg_m1z_up: 'curl -H "Content-Type: application/soap+xml" -X POST -d "@/config/ptz/ptz_up.xml" http://192.168.111.71:5000/onvif/device_service'
+  dg_m1z_down: 'curl -H "Content-Type: application/soap+xml" -X POST -d "@/config/ptz/ptz_down.xml" http://192.168.111.71:5000/onvif/device_service'
+  dg_m1z_left: 'curl -H "Content-Type: application/soap+xml" -X POST -d "@/config/ptz/ptz_left.xml" http://192.168.111.71:5000/onvif/device_service'
+  dg_m1z_right: 'curl -H "Content-Type: application/soap+xml" -X POST -d "@/config/ptz/ptz_right.xml" http://192.168.111.71:5000/onvif/device_service'
+# -----------------------------------------
 #
 camera:
 # Digoo camera
-# IP:192.168.111.106 for Dlink router Wifi, 192.168.112.108 for Xiaomi Mi-3 Router Wifi
-  - platform: onvif
-    host: 192.168.112.108
-    name: Digoo_no.1
-    username: admin
-    password: !secret digoo1_password 
-    port: 554  #was 5000
-    service: CAMERA.ONVIF_PTZ
-    entity: camera.digoo_no_1   # changed from entity: camera.digoo_no1
-# --------------------------------------
-#
-#  - platform: generic
-#    input: rtsp://192.168.112.108/onvif1  # for ffmpeg cameras
-#    still_image_url: /home/yossi/homeassistant/lib/python3.6/site-packages/homeassistant/components/demo/demo_3.jpg  # for generic cameras
-#    stream_source: rtsp://admin:jb3442jb3442@192.168.112.108:554/onvif1
-#    stream_source: rtsp://192.168.112.108:554/onvif1
-#    name: Digoo_no.3
+# IP:192.168.111.106 (wifi) 192.168.111.137 (wired) for Dlink router , 192.168.112.108 (wifi) / 192.168.112.187 (wired) for Xiaomi Mi-3 Router Wifi
+  - platform: ffmpeg
+    input: !secret ffmpeg_input1  # # the full one is: rtsp://admin:<cam_pwd>@192.168.111.71:554/onvif1 was=>  rtsp://admin:<cam_pwd>@192.168.111.106:554/onvif1 
+# use onvif2 for a asmaller image  ## rtsp://192.168.111.137:554/onvif2  # for ffmpeg cameras
+    name: Digoo_no_1
+#  - platform: onvif  # --- NOT OPERATIONAL --- due to a HASS issue
+#    host: 192.168.111.106 # 192.168.112.106 # 192.168.112.187
+#    service: camera.onvif_ptz  # - added here after commenting out the above camera (ONVIF)
+#    entity: camera.digoo_no_1  # this line was also added   
 #    username: admin
-#    password: !secret digoo1_password 
-#---- This (above) didn't work after upgrading to HA 0.94 ......
-#  
+#    password: !secret digoo1_password
+#    port: 5000 # was 554, as in ffmpeg definitions
+#    profile: 1
+  - platform: ffmpeg
+    input: !secret ffmpeg_input2  # # the full one is: rtsp://admin:<cam_pwd>@192.168.111.71:554/onvif2 was=>  rtsp://admin:<cam_pwd>@192.168.112.108:554/onvif2 
+    name: Digoo_no_2   
+#
 # -----------------------------------------
-#  - platform: generic
-#    input: rtsp://192.168.111.106/onvif1  # for ffmpeg cameras
-#    still_image_url: rtsp://192.168.111.106/onvif1  # for generic cameras
-#    name: Digoo no.2
-#    username: admin
-#    password: !secret digoo1_password 
-#    port: 554
-#    service: CAMERA.ONVIF_PTZ
-#    entity: camera.digoo_no2
+# Samsung SNH6431 camera
+  - platform: ffmpeg
+    input: !secret snh6431_input1  # # the full one is: rtsp://admin:jb3442@192.168.111.73/profile1/media.smp
+    name: snh6431_smartcam_hi-res
+  - platform: ffmpeg
+    input: !secret snh6431_input2  # # the full one is: rtsp://admin:jb3442@192.168.111.73/profile3/media.smp
+    name: snh6431_smartcam_lo-res   
 #
+# ======== END CAMERAs ===============
+
+#
+#
+tuya:
+  username: !secret tuya_user
+  password: !secret tuya_pwd
+  country_code: !secret tuya_country
+  platform: smart_life
 # ------------------------------------
-# SonOff RF Bridge as binary_sensor (for receiving RF commands)
-# Using it for transmitting RF commands is done by definition as a switch
-# IP:192.168.111.170
-# ------------------------------------
-binary_sensor:
-    - platform: mqtt
-      state_topic: "RF_Bridge_01/tele/RESULT"
-      name: "But_A Remt01 Pressed" #Remote 01 is the Sonoff RF switch remote
-      value_template: '{{value_json.RfReceived.Data}}'
-      payload_on: '39CE94'
-#      payload_off: '39CE94off'  #Doesn't turn off - only with off_delay
-      off_delay: 5
-      device_class: light
-      qos: 1
-#------------------------
-    - platform: mqtt
-      state_topic: "RF_Bridge_01/tele/RESULT"
-      name: "But_BD Remt01 Pressed" #Remote 01 is the Sonoff RF switch remote
-      # BD button is the combination of simultaneous buttons B & D
-      value_template: '{{value_json.RfReceived.Data}}'
-      payload_on: '39CE9A'
-#      payload_off: '39CE9Aoff' #Doesn't turn off - only with off_delay
-      device_class: light
-      off_delay: 10
-      qos: 1
-#------------------------
-    - platform: mqtt
-      name: "But_B Remt01 Pressed" #Remote 01 is the Sonoff RF switch remote
-      state_topic: "RF_Bridge_01/tele/RESULT"
-      value_template: '{{value_json.RfReceived.Data}}'
-      payload_on: "39CE98"
-#      payload_off: "39CE98off" #Doesn't turn off - only with off_delay
-      off_delay: 5
-      device_class: light
-      qos: 1
-#--------------------------
-    - platform: mqtt
-      name: "But_C Remt01 Pressed" #Remote 01 is the Sonoff RF switch remote
-      state_topic: "RF_Bridge_01/tele/RESULT"
-      value_template: '{{value_json.RfReceived.Data}}'
-      payload_on: "39CE91"
-#      payload_off: "39CE91off" #Doesn't turn off - only with off_delay
-      off_delay: 5
-      device_class: power
-      qos: 1
-#-----------------------------
-    - platform: mqtt
-      name: "But_D Remt01 Pressed" #Remote 01 is the Sonoff RF switch remote
-      state_topic: "RF_Bridge_01/tele/RESULT"
-      value_template: '{{value_json.RfReceived.Data}}'
-      payload_on: "39CE92"
-#      payload_off: "39CE92off"  #Doesn't turn off - only with off_delay
-      off_delay: 5
-      device_class: lock
-      qos: 1
-#=================================================
+# ===============================================================
+#     
+#======== input_select variables ================
 #
