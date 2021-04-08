@@ -1,0 +1,286 @@
+- alias: Enable MQTT discovery for all devices
+  trigger:
+    platform: homeassistant
+    event: start
+  action:
+  - service: mqtt.publish
+    data:
+      topic: cmnd/sonoffs/SetOption19
+      payload: '1'
+  id: 7b5e78d55f3e440faca186571075193c
+- alias: IFTTT Webhooks
+  trigger:
+    platform: event
+    event_type: ifttt_webhook_received
+    event_data:
+      action: call_service
+  action:
+    service_template: '{{ trigger.event.data.service }}'
+    data_template:
+      entity_id: '{{ trigger.event.data.entity_id }}'
+  id: a7c0ba2213c44e7cbb4b918e0203f372
+- alias: Aqara cube right - Toggle T1 sw1
+  trigger:
+    platform: mqtt
+    topic: zigbee2mqtt/0x00158d00029acc5a
+  condition:
+    condition: template
+    value_template: '{{trigger.payload_json.action == ''rotate_right''}}'
+  action:
+    service: switch.toggle
+    entity_id: switch.sonoff_2_gang_wall_light_switch_no1_sw1
+  id: d67fa10712fa4b608864d36790fc48e9
+- alias: Aqara cube left - Toggle T1 sw2
+  trigger:
+    platform: mqtt
+    topic: zigbee2mqtt/0x00158d00029acc5a
+  condition:
+    condition: template
+    value_template: '{{trigger.payload_json.action == ''rotate_left''}}'
+  action:
+    service: switch.toggle
+    entity_id: switch.sonoff_2_gang_wall_light_switch_no1_sw2
+  id: f73a480397c3470bafea2bfd079e3202
+- alias: Aqara cube shake - Turn on T1 Sw1 + Sw2
+  trigger:
+    platform: mqtt
+    topic: zigbee2mqtt/0x00158d00029acc5a
+  condition:
+    condition: template
+    value_template: '{{trigger.payload_json.action == ''shake''}}'
+  action:
+  - service: switch.turn_on
+    data:
+      entity_id:
+      - switch.sonoff_2_gang_wall_light_switch_no1_sw1
+  - service: switch.turn_on
+    data:
+      entity_id:
+      - switch.sonoff_2_gang_wall_light_switch_no1_sw2
+  id: 672eaa79add74922b02355bbe49ef8b7
+- alias: Aqara cube fall - Turn off T1 Sw1 + Sw2
+  trigger:
+    platform: mqtt
+    topic: zigbee2mqtt/0x00158d00029acc5a
+  condition:
+    condition: template
+    value_template: '{{trigger.payload_json.action == ''fall''}}'
+  action:
+  - service: switch.turn_off
+    data:
+      entity_id:
+      - switch.sonoff_2_gang_wall_light_switch_no1_sw1
+  - service: switch.turn_off
+    data:
+      entity_id:
+      - switch.sonoff_2_gang_wall_light_switch_no1_sw2
+  id: 0b891e4b9a8f4ec38aa115e3f430c8ae
+- alias: Aqara cube 0 to 5 - Turn Kitchen Socket on
+  trigger:
+    platform: mqtt
+    topic: zigbee2mqtt/0x00158d00029acc5a
+  condition:
+    condition: and
+    conditions:
+    - condition: template
+      value_template: '{{trigger.payload_json.action == ''flip90''}}'
+    - condition: template
+      value_template: '{{trigger.payload_json.from_side == 0}}'
+    - condition: template
+      value_template: '{{trigger.payload_json.to_side == 5}}'
+  action:
+  - service: ifttt.trigger
+    data:
+      event: JB_HA_Web_Req_Socket01_on
+  id: c7f2b7961d844382997435a1722865df
+- alias: Aqara cube 0 to 2 - Turn Kitchen Socket off
+  trigger:
+    platform: mqtt
+    topic: zigbee2mqtt/0x00158d00029acc5a
+  condition:
+    condition: and
+    conditions:
+    - condition: template
+      value_template: '{{trigger.payload_json.action == ''flip90''}}'
+    - condition: template
+      value_template: '{{trigger.payload_json.from_side == 0}}'
+    - condition: template
+      value_template: '{{trigger.payload_json.to_side == 2}}'
+  action:
+  - service: ifttt.trigger
+    data:
+      event: JB_HA_Web_Req_Socket01_off
+  id: dd5b411c840b4f9d964bf7316c6aed5a
+- alias: Aqara cube side 1 - Turn Kitchen Socket off
+  trigger:
+    platform: mqtt
+    topic: zigbee2mqtt/0x00158d00029acc5a
+  condition:
+    condition: template
+    value_template: '{{trigger.payload_json.side == 1}}'
+  action:
+  - service: ifttt.trigger
+    data:
+      event: JB_HA_Web_Req_Socket01_off
+  id: 7d210f7ae04741108fbb97532a253104
+- id: aqara_cube_side_4_turn_kitchen_socket_on
+  alias: Aqara cube side 4 - Turn Kitchen Socket on
+  trigger:
+    platform: mqtt
+    topic: zigbee2mqtt/0x00158d00029acc5a
+  condition:
+    condition: template
+    value_template: '{{trigger.payload_json.side == 4}}'
+  action:
+  - service: ifttt.trigger
+    data:
+      event: JB_HA_Web_Req_Socket01_on
+- id: enable_zigbee_join
+  alias: Enable Zigbee joining
+  trigger:
+    platform: state
+    entity_id: input_boolean.zigbee_permit_join
+    to: 'on'
+  action:
+  - service: mqtt.publish
+    data:
+      topic: zigbee2mqtt/bridge/config/permit_join
+      payload: 'true'
+  - service: timer.start
+    data:
+      entity_id: timer.zigbee_permit_join
+- id: disable_zigbee_join
+  alias: Disable Zigbee joining
+  trigger:
+  - entity_id: input_boolean.zigbee_permit_join
+    platform: state
+    to: 'off'
+  action:
+  - data:
+      payload: 'false'
+      topic: zigbee2mqtt/bridge/config/permit_join
+    service: mqtt.publish
+  - data:
+      entity_id: timer.zigbee_permit_join
+    service: timer.cancel
+- id: disable_zigbee_join_timer
+  alias: Disable Zigbee joining by timer
+  trigger:
+  - platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.zigbee_permit_join
+  action:
+  - service: mqtt.publish
+    data:
+      topic: zigbee2mqtt/bridge/config/permit_join
+      payload: 'false'
+  - service: input_boolean.turn_off
+    data:
+      entity_id: input_boolean.zigbee_permit_join
+- id: '1584141921152'
+  alias: Turn AqaraBulb01 on with Mijia_switch01 x3
+  description: Turn Aqara Bulb01 on by pressing Mijia_switch01 3 times
+  trigger:
+  - entity_id: sensor.mijia_switch01_state
+    platform: state
+    to: triple
+  condition: []
+  action:
+  - data: {}
+    entity_id: light.aqara_bulb_01
+    service: light.turn_on
+- id: '1584142362367'
+  alias: Turn AqaraBulb01 OFF with Mijia_switch01 x4
+  description: Turn Aqara Bulb01 OFF by pressing Mijia_switch01 x4 times
+  trigger:
+  - entity_id: sensor.mijia_switch01_state
+    platform: state
+    to: quadruple
+  condition: []
+  action:
+  - data: {}
+    entity_id: light.aqara_bulb_01
+    service: light.turn_off
+- id: '1584144460797'
+  alias: Flash AqaraBulb01 with Mijia_switch01 long press
+  description: Flash AqaraBulb01 with Mijia_switch01 long press
+  trigger:
+  - entity_id: sensor.mijia_switch01_state
+    platform: state
+    to: long
+  condition: []
+  action:
+  - data: {}
+    service: script.1584050593626
+- id: '1584236447848'
+  alias: 'Flash Eurolux bulb upon receipt of ifttt webhook '
+  description: Upon receipt of flash_eurolux_bulb01 command from ifttt, call "eurolux
+    flash service"
+  trigger:
+  - platform: webhook
+    webhook_id: flash_eurolux_bulb01
+  condition: []
+  action:
+  - data: {}
+    service: script.1583129315544
+- id: '1584892073910'
+  alias: Pump water on roof - automation
+  description: Turn roof water pump on for [xx] minutes (per the script) when "wet"
+    condition is detected by the water sensor for more than 3 minutes. Then check
+    if still "wet" (and the script is not running anymore). If yes, run the script
+    again.
+  trigger:
+  - entity_id: binary_sensor.roof_water_sensor
+    for: 3 min
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: script.1584895114479
+    state: 'off'
+  action:
+  - data: {}
+    entity_id: switch.water_pump
+    service: script.1584895114479
+- id: '1595937588896'
+  alias: Turn sonoff05 on when sonoff05-sensor is on
+  description: Turn sonoff05 on when sonoff05-sensor is on
+  trigger:
+  - entity_id: binary_sensor.sonoff05_sensor
+    for: 00:00:05
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - data: {}
+    entity_id: switch.general_switch_05
+    service: switch.turn_on
+  - data:
+      event: message_from_yossis_homeassistant_01
+      value1: General Switch 05 activated
+      value2: Just now...
+    service: ifttt.trigger
+  mode: single
+- id: '1595937745551'
+  alias: Turn sonoff05 off when sonoff05-sensor is off
+  description: Turn sonoff05 off when sonoff05-sensor is off
+  trigger:
+  - entity_id: binary_sensor.sonoff05_sensor
+    for: 00:00:05
+    from: 'on'
+    platform: state
+    to: 'off'
+  - entity_id: binary_sensor.0x00158d0004073ca0_contact
+    for: 00:00:03
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data: {}
+    entity_id: switch.general_switch_05
+    service: switch.turn_off
+  mode: single
